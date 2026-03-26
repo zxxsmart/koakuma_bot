@@ -1,0 +1,10 @@
+nonebot2[fastapi]
+nonebot-adapter-onebot
+nonebot-plugin-apscheduler
+beautifulsoup4
+rapidfuzz
+numpy
+onnxruntime
+Pillow
+huggingface_hub
+PyYAML
