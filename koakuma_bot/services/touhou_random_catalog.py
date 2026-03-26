@@ -1,10 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 import random
 from pathlib import Path
 
 from koakuma_bot.services.project_paths import project_data_path
+
 
 CHARACTER_CSV = project_data_path("TH_character.csv")
 PLAY_CSV = project_data_path("THplay.csv")
@@ -14,9 +15,14 @@ SPELLCARD_CSV = project_data_path("TH_spellcard.csv")
 RANDOM_PLAY_ALL_KEYWORDS = {"随机", "随意", "全部", "全作"}
 
 
+def _clean_cell(cell: str) -> str:
+    cleaned = cell.replace("System.Xml.XmlElement", " ").strip()
+    return " ".join(cleaned.split())
+
+
 def _load_csv_rows(path: Path) -> list[list[str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as file:
-        return [[cell.strip() for cell in row] for row in csv.reader(file)]
+        return [[_clean_cell(cell) for cell in row] for row in csv.reader(file)]
 
 
 def random_character(mode: str = "") -> str:

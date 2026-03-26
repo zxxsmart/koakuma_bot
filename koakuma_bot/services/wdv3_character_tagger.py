@@ -19,6 +19,9 @@ MODEL_FILENAME = "model.onnx"
 LABEL_FILENAME = "selected_tags.csv"
 LEGACY_LABELS_PATH = project_data_path("labels_legacy.txt")
 CHARACTER_LABELS_CSV_PATH = project_data_path("character_labels_full.csv")
+LOCAL_MODEL_DIR = project_data_path("wdv3")
+LOCAL_MODEL_PATH = LOCAL_MODEL_DIR / MODEL_FILENAME
+LOCAL_LABEL_PATH = LOCAL_MODEL_DIR / LABEL_FILENAME
 
 KAOMOJIS = {
     "0_0",
@@ -136,15 +139,39 @@ def ensure_character_labels_catalog() -> Path:
 
 @lru_cache(maxsize=1)
 def _load_label_rows() -> list[dict[str, str]]:
-    csv_path = hf_hub_download(repo_id=MODEL_REPO, filename=LABEL_FILENAME)
+    csv_path = _resolve_label_path()
     with open(csv_path, "r", encoding="utf-8") as file:
         return list(csv.DictReader(file))
 
 
 @lru_cache(maxsize=1)
 def _load_session() -> ort.InferenceSession:
-    model_path = hf_hub_download(repo_id=MODEL_REPO, filename=MODEL_FILENAME)
+    model_path = _resolve_model_path()
     return ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+
+
+def _resolve_model_path() -> str:
+    if LOCAL_MODEL_PATH.exists():
+        return str(LOCAL_MODEL_PATH)
+    try:
+        return hf_hub_download(repo_id=MODEL_REPO, filename=MODEL_FILENAME)
+    except Exception as error:
+        raise RuntimeError(
+            "无法加载 WDV3 模型。请将 model.onnx 放到 data/wdv3/ 下，"
+            "或检查代理环境变量是否正确，例如把 socks:// 改成 socks5://。"
+        ) from error
+
+
+def _resolve_label_path() -> str:
+    if LOCAL_LABEL_PATH.exists():
+        return str(LOCAL_LABEL_PATH)
+    try:
+        return hf_hub_download(repo_id=MODEL_REPO, filename=LABEL_FILENAME)
+    except Exception as error:
+        raise RuntimeError(
+            "无法加载 WDV3 标签文件。请将 selected_tags.csv 放到 data/wdv3/ 下，"
+            "或检查代理环境变量是否正确，例如把 socks:// 改成 socks5://。"
+        ) from error
 
 
 def _prepare_image(image_path: Path, target_size: int) -> np.ndarray:
