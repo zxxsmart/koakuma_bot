@@ -45,14 +45,6 @@ KAOMOJIS = {
     "||_||",
 }
 
-RATING_LABELS = {
-    "general": "全年龄",
-    "sensitive": "轻度敏感",
-    "questionable": "较敏感",
-    "explicit": "成人",
-}
-
-
 @lru_cache(maxsize=1)
 def _load_legacy_character_names() -> dict[str, str]:
     if not LEGACY_LABELS_PATH.exists():
@@ -211,29 +203,9 @@ def _run_inference(image_path: Path) -> tuple[list[dict[str, str]], np.ndarray]:
     return labels, preds
 
 
-def classify_character_tags(
-    image_path: Path,
-    character_threshold: float = 0.85,
-    top_n: int = 8,
-) -> list[tuple[str, float]]:
-    labels, preds = _run_inference(image_path)
-
-    character_results: list[tuple[str, float]] = []
-    for index, row in enumerate(labels):
-        if row.get("category") != "4":
-            continue
-        score = float(preds[index])
-        if score < character_threshold:
-            continue
-        character_results.append((_display_character_name(row["name"]), score))
-
-    character_results.sort(key=lambda item: item[1], reverse=True)
-    return character_results[:top_n]
-
-
 def classify_image(
     image_path: Path,
-    character_threshold: float = 0.85,
+    character_threshold: float = 0.5,
     top_n: int = 8,
 ) -> dict[str, object]:
     labels, preds = _run_inference(image_path)
@@ -258,7 +230,6 @@ def classify_image(
 
     return {
         "rating_key": top_rating_name,
-        "rating_name": RATING_LABELS.get(top_rating_name, top_rating_name),
         "rating_score": top_rating_score,
         "characters": characters[:top_n],
     }
