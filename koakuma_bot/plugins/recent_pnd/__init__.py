@@ -11,9 +11,6 @@ from koakuma_bot.services.pnd_feed import fetch_recent_entries, find_new_recent_
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
-
-DEFAULT_GROUPS = [630043089, 280569556, 758377325, 418520896, 728660903, 1047110422]
-
 recent_pnd_sync = on_command("recent_pnd_sync", permission=SUPERUSER, block=True, priority=10)
 recent_pnd_latest = on_command(
     "recent_pnd_latest",
@@ -29,7 +26,7 @@ def get_online_bot() -> Bot | None:
 
 
 def get_target_groups() -> list[int]:
-    return load_group_targets("recent_pnd", DEFAULT_GROUPS)
+    return load_group_targets("recent_pnd")
 
 
 async def broadcast_new_entries() -> int:

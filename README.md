@@ -15,6 +15,7 @@ This is a NoneBot2 + OneBot V11 bot for the migrated legacy QQ bot plugins.
 - `koakuma_bot/services/touhou_random_catalog.py`: CSV-backed random data service
 - `data/`: all runtime data used by the bot
 - `data/group_targets/`: per-plugin target group lists for scheduled/broadcast plugins
+- `data/chcard_data/`: local-only group allowlist config for guess_song
 
 ## Run
 
@@ -44,6 +45,7 @@ If you use access token, keep it the same in both NapCat and `.env`.
 - Random data plugins read `TH_character.csv`, `THplay.csv`, `TH_sound.csv`, and `TH_spellcard.csv` from `data/`.
 - Calendar scheduled messages read YAML files from `data/days/` and target groups from `data/group_targets/calendar.txt`.
 - Recent PND polling targets are configured in `data/group_targets/recent_pnd.txt`.
+- Group target files and `allow_group.txt` are local-only config files and should not be committed with real group IDs.
 - Character label mappings are stored in `data/character_labels_full.csv`.
 - If you want to seed extra old label mappings, you can place them in `data/labels_legacy.txt`.
 - Audio slicing uses `ffprobe` and `ffmpeg` directly.

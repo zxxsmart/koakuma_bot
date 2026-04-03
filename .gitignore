@@ -1,0 +1,5 @@
+data/group_targets/*.txt
+data/chcard_data/allow_group.txt
+data/calendar_groups.txt
+!data/group_targets/.gitkeep
+!data/chcard_data/.gitkeep

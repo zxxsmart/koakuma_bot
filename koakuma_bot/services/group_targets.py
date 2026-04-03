@@ -6,6 +6,7 @@ from koakuma_bot.services.project_paths import project_data_path
 
 
 GROUP_TARGETS_DIR = project_data_path("group_targets")
+GROUP_TARGETS_TEMPLATE = "# One group ID per line.\n# Lines starting with # are ignored.\n"
 
 
 def ensure_group_targets_dir() -> Path:
@@ -18,20 +19,17 @@ def group_target_file(name: str) -> Path:
     return GROUP_TARGETS_DIR / f"{name}.txt"
 
 
-def ensure_group_target_file(name: str, default_groups: list[int] | tuple[int, ...]) -> Path:
+def ensure_group_target_file(name: str) -> Path:
     path = group_target_file(name)
     if path.exists():
         return path
 
-    path.write_text(
-        "\n".join(str(group_id) for group_id in default_groups) + "\n",
-        encoding="utf-8",
-    )
+    path.write_text(GROUP_TARGETS_TEMPLATE, encoding="utf-8")
     return path
 
 
-def load_group_targets(name: str, default_groups: list[int] | tuple[int, ...] = ()) -> list[int]:
-    path = ensure_group_target_file(name, default_groups)
+def load_group_targets(name: str) -> list[int]:
+    path = ensure_group_target_file(name)
     groups: list[int] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         text = line.strip()

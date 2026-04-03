@@ -16,17 +16,6 @@ from nonebot_plugin_apscheduler import scheduler
 
 
 DAYS_DIR = project_data_path("days")
-GROUPS_FILE = project_data_path("calendar_groups.txt")
-DEFAULT_GROUPS = [
-    630043089,
-    280569556,
-    758377325,
-    1047110422,
-    782829102,
-    574039316,
-    538232983,
-    1018561106,
-]
 
 
 def load_month_entries(month: int) -> list[dict]:
@@ -79,7 +68,7 @@ async def broadcast_today_calendar() -> None:
         logger.info("calendar: no entries for today")
         return
 
-    groups = load_group_targets("calendar", DEFAULT_GROUPS)
+    groups = load_group_targets("calendar")
     if not groups:
         logger.info("calendar: no target groups configured")
         return
