@@ -1,10 +1,8 @@
-# Local configuration and account backups
 .env
 .env.*
 !.env.example
 qq_cleanup_backup/
 
-# Local bot data and runtime artifacts
 data/group_targets/*.txt
 data/chcard_data/allow_group.txt
 data/calendar_groups.txt
@@ -33,6 +31,9 @@ __pycache__/
 *.py[cod]
 .venv/
 tools/
+tests/
+run_bot.sh
+run_napcat.sh
 NapCatInstaller.zip
 .DS_Store
 !data/group_targets/.gitkeep
