@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 
 from nonebot import get_bots, get_driver, logger, on_command, require
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
 
 from koakuma_bot.services.bilibili_live import (
+    LiveRoom,
     ensure_room_file,
+    fetch_anchor_name,
     fetch_live_room,
     load_live_state,
     load_room_ids,
@@ -34,6 +36,13 @@ bilibili_live_status = on_command(
 def get_online_bot() -> Bot | None:
     bots = [bot for bot in get_bots().values() if isinstance(bot, Bot)]
     return bots[0] if bots else None
+
+
+def build_live_message(room: LiveRoom) -> Message:
+    message = Message(MessageSegment.text(room.format_message()))
+    if room.cover_url:
+        message.append(MessageSegment.image(room.cover_url))
+    return message
 
 
 async def broadcast_live_notifications() -> int:
@@ -67,9 +76,14 @@ async def broadcast_live_notifications() -> int:
             try:
                 # Persist the observed session even if all sends fail this time.
                 save_live_state(states)
-                if room.live_status != 1:
+                if room.live_status != 1 or all(group in state.notified_groups for group in groups):
                     continue
-                message = MessageSegment.text(room.format_message())
+                try:
+                    room.username = await asyncio.to_thread(fetch_anchor_name, room.room_id)
+                except Exception as error:
+                    logger.warning(f"bilibili_live: failed to fetch username for room {room.room_id}: {error}")
+                    continue
+                message = build_live_message(room)
                 for group_id in groups:
                     if group_id in state.notified_groups:
                         continue
@@ -77,7 +91,20 @@ async def broadcast_live_notifications() -> int:
                         await bot.send_group_msg(group_id=group_id, message=message)
                     except Exception as error:
                         logger.warning(f"bilibili_live: failed to send room {room.room_id} to group {group_id}: {error}")
-                        continue
+                        if not room.cover_url:
+                            continue
+                        # A failed cover download must not hide the live notice.
+                        try:
+                            await bot.send_group_msg(
+                                group_id=group_id,
+                                message=MessageSegment.text(room.format_message()),
+                            )
+                        except Exception as text_error:
+                            logger.warning(
+                                f"bilibili_live: text fallback failed for room {room.room_id} "
+                                f"to group {group_id}: {text_error}"
+                            )
+                            continue
                     state.notified_groups.add(group_id)
                     save_live_state(states)
                     count += 1

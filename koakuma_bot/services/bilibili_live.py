@@ -13,6 +13,7 @@ from koakuma_bot.services.project_paths import project_data_path
 ROOMS_PATH = project_data_path("bilibili_live_rooms.txt")
 STATE_PATH = project_data_path("bilibili_live_state.json")
 ROOM_INFO_URL = "https://api.live.bilibili.com/room/v1/Room/get_info"
+ANCHOR_INFO_URL = "https://api.live.bilibili.com/live_user/v1/UserInfo/get_anchor_in_room"
 ROOMS_TEMPLATE = "# One Bilibili live room ID per line (short or full ID).\n# Lines starting with # are ignored.\n"
 
 
@@ -22,17 +23,11 @@ class LiveRoom:
     live_status: int
     title: str
     live_time: str = ""
+    cover_url: str = ""
+    username: str = ""
 
     def format_message(self) -> str:
-        lines = [
-            "Bilibili 开播通知：",
-            f"直播间：{self.room_id}",
-            f"标题：{self.title or '未设置标题'}",
-        ]
-        if self.live_time:
-            lines.append(f"开播时间：{self.live_time}")
-        lines.append(f"https://live.bilibili.com/{self.room_id}")
-        return "\n".join(lines)
+        return f"{self.username or '主播'}正在 https://live.bilibili.com/{self.room_id} 直播：{self.title or '未设置标题'}"
 
 
 @dataclass
@@ -85,12 +80,38 @@ def fetch_live_room(room_id: int) -> LiveRoom:
     live_time = str(data.get("live_time") or "").strip()
     if live_time == "0000-00-00 00:00:00":
         live_time = ""
+    cover_url = ""
+    for field_name in ("user_cover", "keyframe"):
+        candidate = str(data.get(field_name) or "").strip()
+        if candidate.startswith("//"):
+            candidate = f"https:{candidate}"
+        if candidate.startswith(("https://", "http://")):
+            cover_url = candidate
+            break
     return LiveRoom(
         room_id=canonical_id,
         live_status=live_status,
         title=str(data.get("title") or "").strip(),
         live_time=live_time,
+        cover_url=cover_url,
     )
+
+
+def fetch_anchor_name(room_id: int) -> str:
+    request = Request(
+        f"{ANCHOR_INFO_URL}?{urlencode({'roomid': room_id})}",
+        headers={"User-Agent": "Mozilla/5.0", "Referer": "https://live.bilibili.com/"},
+    )
+    with urlopen(request, timeout=15) as response:
+        payload = json.load(response)
+    if not isinstance(payload, dict) or payload.get("code") != 0:
+        raise ValueError(f"Bilibili room {room_id}: unsuccessful anchor response")
+    data = payload.get("data")
+    info = data.get("info") if isinstance(data, dict) else None
+    username = info.get("uname") if isinstance(info, dict) else None
+    if not isinstance(username, str) or not username.strip():
+        raise ValueError(f"Bilibili room {room_id}: missing anchor username")
+    return username.strip()
 
 
 def next_room_state(room: LiveRoom, previous: LiveRoomState | None) -> LiveRoomState:
