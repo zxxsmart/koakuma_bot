@@ -3,6 +3,7 @@ nonebot-adapter-onebot
 nonebot-plugin-apscheduler
 beautifulsoup4
 rapidfuzz
+silk-python
 numpy
 onnxruntime
 Pillow

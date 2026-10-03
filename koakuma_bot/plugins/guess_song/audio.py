@@ -5,7 +5,12 @@ import os
 import subprocess
 from pathlib import Path
 
+import pysilk
 from nonebot import get_driver
+
+
+SILK_SAMPLE_RATE = 24000
+SILK_BIT_RATE = 24000
 
 
 def _resolve_binary(binary_name: str) -> str:
@@ -46,6 +51,7 @@ def export_audio_fragment(source_path: Path, output_path: Path, start_ms: int, c
     output_path.parent.mkdir(parents=True, exist_ok=True)
     start_seconds = max(start_ms, 0) / 1000
     clip_seconds = max(clip_ms, 1) / 1000
+    pcm_path = output_path.with_suffix(".pcm")
 
     command = [
         _resolve_binary("ffmpeg"),
@@ -57,8 +63,17 @@ def export_audio_fragment(source_path: Path, output_path: Path, start_ms: int, c
         "-i",
         str(source_path),
         "-vn",
-        "-acodec",
-        "mp3",
-        str(output_path),
+        "-ar",
+        str(SILK_SAMPLE_RATE),
+        "-ac",
+        "1",
+        "-f",
+        "s16le",
+        str(pcm_path),
     ]
-    subprocess.run(command, capture_output=True, check=True)
+    try:
+        subprocess.run(command, capture_output=True, check=True)
+        with pcm_path.open("rb") as pcm_file, output_path.open("wb") as silk_file:
+            pysilk.encode(pcm_file, silk_file, SILK_SAMPLE_RATE, SILK_BIT_RATE, tencent=True)
+    finally:
+        pcm_path.unlink(missing_ok=True)

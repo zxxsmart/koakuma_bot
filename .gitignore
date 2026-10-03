@@ -1,9 +1,21 @@
+# Local configuration and account backups
+.env
+.env.*
+!.env.example
+qq_cleanup_backup/
+
+# Local bot data and runtime artifacts
 data/group_targets/*.txt
 data/chcard_data/allow_group.txt
 data/calendar_groups.txt
 data/recent_pnd_state.json
+data/bilibili_live_rooms.txt
+data/bilibili_live_state.json
+data/bilibili_live_state.json.tmp
 data/song_data.db
 data/temp_guess_song.mp3
+data/temp_guess_song.silk
+data/temp_guess_song.pcm
 data/classify_input.jpg
 data/img.jpg
 data/imgs.jpg
@@ -17,5 +29,11 @@ data/nlist_old.txt
 data/score.txt
 data/tags_list.txt
 data/tag_dirs_cont.pkl
+__pycache__/
+*.py[cod]
+.venv/
+tools/
+NapCatInstaller.zip
+.DS_Store
 !data/group_targets/.gitkeep
 !data/chcard_data/.gitkeep

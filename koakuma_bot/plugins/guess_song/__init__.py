@@ -118,8 +118,14 @@ async def start_song_game(bot: Bot, group_id: int, difficulty: str) -> tuple[boo
             return
 
     game.timeout_task = asyncio.create_task(timeout())
-    await bot.send_group_msg(group_id=group_id, message=build_record_message(TEMP_AUDIO))
-    await bot.send_group_msg(group_id=group_id, message=f"{ONE_TURN_TIME} 秒后公布答案")
+    try:
+        await bot.send_group_msg(group_id=group_id, message=build_record_message(TEMP_AUDIO))
+        await bot.send_group_msg(group_id=group_id, message=f"{ONE_TURN_TIME} 秒后公布答案")
+    except Exception as error:
+        if game.timeout_task:
+            game.timeout_task.cancel()
+        await manager.finish_game(group_id)
+        return False, f"题目音频发送失败：{error}"
     return True, ""
 
 
